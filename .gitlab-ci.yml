@@ -54,7 +54,7 @@ release:
     name: gcr.io/go-containerregistry/crane:debug
     entrypoint: [""]
   script:
-    - echo "Updating docker images ..."
+    - echo "Updating docker images..."
     - crane auth login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
     - VTAG=$(cat VERSION)
     - for CVTAG in ${VTAG} latest; do crane tag ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA} ${CVTAG}; done
