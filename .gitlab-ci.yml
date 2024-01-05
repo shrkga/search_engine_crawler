@@ -1,0 +1,48 @@
+stages:
+  - build
+  - test
+
+.extended_deploy:
+  image: dtzar/helm-kubectl:3.13
+  variables:
+    GIT_STRATEGY: none
+    KUBE_NAMESPACE: review
+    KUBE_CONTEXT: ${CI_PROJECT_PATH}:yc-k8s
+    name: ${CI_ENVIRONMENT_SLUG}
+    envname: review/${CI_PROJECT_PATH}/${CI_COMMIT_REF_NAME}
+    host: ${name}.${CI_PAGES_DOMAIN}
+  before_script:
+    # installing dependencies
+    - apk add -U openssl curl tar gzip bash ca-certificates git
+    - wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub
+    - curl -fsSL https://storage.googleapis.com/pub/gsutil.tar.gz | tar -xz -C ${HOME}
+    - export PATH=${PATH}:${HOME}/gsutil
+    - curl -fsSL https://raw.githubusercontent.com/kubernetes/helm/master/scripts/sync-repo.sh -o /usr/bin/sync-repo.sh
+    - chmod a+x /usr/bin/sync-repo.sh
+    # ensuring namespace
+    - kubectl config get-contexts
+    - kubectl config use-context ${KUBE_CONTEXT}
+    - kubectl describe namespace "${KUBE_NAMESPACE}" || kubectl create namespace "${KUBE_NAMESPACE}"
+
+build:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "Building and pushing Dockerfile-based application..."
+    - /kaniko/executor
+      --cache=true
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+  only:
+   - branches
+
+test:
+  stage: test
+  script:
+    - env
+    - exit 0
+  only:
+    - branches
