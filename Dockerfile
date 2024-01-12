@@ -4,9 +4,8 @@ WORKDIR /app/
 COPY ./ ./
 
 RUN set -x \
- && apk --no-cache --update add python3 py3-pip python3-dev build-base gcc musl-dev \
- && pip3 install --no-cache-dir -r requirements.txt \
- && apk del python3-dev build-base
+ && apk --no-cache --update add python3 py3-pip \
+ && pip3 install --no-cache-dir -r requirements.txt
 
 ENV EXCLUDE_URLS=.*github.com
 
